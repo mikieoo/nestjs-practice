@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Body, Controller, Get, NotFoundException, Param, Post } from '@nestjs/common';
 import { PostsService } from './posts.service';
 
 /**
@@ -59,6 +59,41 @@ export class PostsController {
   // 2) GET /posts/:id
   // id에 해당되는 post를 가져온다
   // 예를 들어서 id=1일 경우 id가 1인 포스트를 가져온다.
+  @Get(':id')
+  getPost(@Param('id') id: string) {
+    const post = posts.find((post) => post.id === +id);
+
+    if (!post) {
+      throw new NotFoundException;
+    }
+
+    return post;
+  }
+
+  // 3) POST /posts
+  // POST를 생성한다.
+  @Post()
+  postPosts(
+    @Body('author') author:string,
+    @Body('title') title:string,
+    @Body('content') content:string
+  ) {
+    const post = {
+      id: posts[posts.length - 1].id + 1,
+      author, // 변수값이 같다면 생략 가능
+      title: title,
+      content: content,
+      likeCount: 0,
+      commentCount: 0
+    };
+
+    posts = [
+      ...posts,
+      post
+    ];
+
+    return post;
+  }
 
   // 4) PUT /posts/:id
   // id에 해당되는 POST를 변경한다.
