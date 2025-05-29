@@ -3,7 +3,7 @@ import { PostsService } from './posts.service';
 
 @Controller('posts')
 export class PostsController {
-  constructor(private readonly postsService: PostsService) {}
+  constructor(private readonly postsService: PostsService) {} // 의존성 주입
 
   // 1) GET /posts
   // 모든 post를 다 가져온다.
