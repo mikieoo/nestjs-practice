@@ -37,71 +37,80 @@ export class PostsService {
     private readonly postsRepository: Repository<PostsModel>
   ){}
 
-    async getAllPosts() {
-      return this.postsRepository.find();
+  async getAllPosts() {
+    return this.postsRepository.find();
+  }
+
+  async getPostById(id: number) {
+    const post = await this.postsRepository.findOne({ // 리포지토리를 사용하는 모든 함수는 비동기 함수임 
+                                                      // 즉 await을 써줘야 밑의 예외처리 가능
+      where: { // 필터할 조건을 적어줌
+        id,
+      }
+    });
+
+    if (!post) {
+      throw new NotFoundException();
     }
 
-    getPostById(id: number) {
-        const post = posts.find((post) => post.id === +id);
+    return post;
+  }
 
-        if (!post) {
-            throw new NotFoundException;
-        }
-
-        return post;
-    }
-
-    createPost(author: string, title: string, content: string) {
-        const post = {
-            id: posts[posts.length - 1].id + 1,
-            author, // 변수값이 같다면 생략 가능
-            title: title,
-            content: content,
-            likeCount: 0,
-            commentCount: 0
-        };
+  async createPost(author: string, title: string, content: string) {
+    // 1) create -> 저장할 객체를 생성한다.
+    // 2) save -> 객체를 저장한다. (create 메서드에서 생성한 객체로)
+    const post = this.postsRepository.create({
+      author,
+      title, 
+      content,
+      likeCount: 0,
+      commentCount: 0
+    });
     
-        posts = [
-            ...posts,
-            post
-        ];
+    const newPost = await this.postsRepository.save(post);
+
+    return newPost;
+  }
+
+  async updatePost(postId: number, author?: string, title?: string, content?: string) {
+    // save의 기능
+    // 1) 만약에 데이터가 존재하지 않는다면 (id 기준으로) 새로 생성한다.
+    // 2) 만약에 데이터가 존재한다면 (같은 id의 값이 존재한다면) 존재하던 값을 업데이트한다.
+    const post = await this.postsRepository.findOne({
+      where: {
+        id: postId,
+      }
+    });
+
+    if (!post) {
+      throw new NotFoundException();
+    }
+
+    if (author) {
+      post.author = author
+    }
+
+    if (title) {
+      post.title = title
+    }
     
-        return post;
+    if (content) {
+      post.content = content
     }
+    const newPost = await this.postsRepository.save(post); // 이미 존재하는 객체라면 생성이 아닌 업데이트를 함
 
-    updatePost(postId: number, author?: string, title?: string, content?: string) {
-        const post = posts.find(post => post.id === postId);
+    return newPost;
+  }
 
-        if (!post) {
-        throw new NotFoundException();
-        }
+  deletePost(postId: number) {
+    const post = posts.find((post) => post.id === postId);
 
-        if (author) {
-        post.author = author
-        }
-
-        if (title) {
-        post.title = title
-        }
-        
-        if (content) {
-        post.content = content
-        }
-
-        posts = posts.map(prevPost => prevPost.id === postId ? post : prevPost);
-
-        return posts;
+    if (!post) {
+    throw new NotFoundException;
     }
+    
+    posts = posts.filter(post => post.id !== postId);
 
-    deletePost(postId: number) {
-        const post = posts.find((post) => post.id === postId);
-
-        if (!post) {
-        throw new NotFoundException;
-        }
-        
-        posts = posts.filter(post => post.id !== postId);
-
-        return postId;
-    }
+    return postId;
+  }
 }
